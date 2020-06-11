@@ -1,1 +1,1 @@
-deno install --allow-net=api.hh.ru --allow-write=.\log -f --unstable .\src\hh-deno-parser.ts
+deno install -f --allow-net=api.hh.ru --allow-write=.\log --unstable -n deno-hh-parser .\src\index.ts
