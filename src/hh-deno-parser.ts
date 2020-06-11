@@ -1,6 +1,7 @@
 import { getVacancies } from './hh/vacancies.ts'
 import { green } from 'https://deno.land/std/fmt/colors.ts';
 
+import { ensureDir } from "https://deno.land/std/fs/mod.ts";
 
 /// CLI PART
 import { parse } from "https://deno.land/std/flags/mod.ts";
@@ -56,5 +57,7 @@ const data = await getVacancies({
 
 
 /// SAVE PART
+await ensureDir("./log");
+
 await Deno.writeFile("./log/vacancies.json", new TextEncoder().encode(JSON.stringify(data, undefined, 2)));
 console.log(green('vacancies.json have been saved'));
