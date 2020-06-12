@@ -77,6 +77,16 @@ const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: 
   return vacancies;
 }
 
+const getFullVacancy = async (vacancy_url: string, headers_init?: HeadersInit): Promise<any> => {
+  const response = await fetch(vacancy_url, {
+    headers: headers_init
+  });
+  const vacancy: any = (await response.json());
+
+  return vacancy;
+}
+
 export {
-  getVacancies
+  getVacancies,
+  getFullVacancy
 }
