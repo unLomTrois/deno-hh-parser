@@ -44,13 +44,20 @@ const filterVacancies = (data: any[], avoid_words: string[]): any[] => {
 
 const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: number, avoid_words?: string[]): Promise<any[]> => {
   // limit
-  ( limit === undefined ? limit = 2000 : console.log(red(`LIMIT: ${ limit }`)) )
+  if (limit === undefined) {
+    limit = 2000;
+  } else {
+    if (limit < (hh_url.query.per_page ?? 100) ) {
+      hh_url.query.per_page = limit;
+    }
+  }
 
   // items per page
   const per_page = hh_url.query.per_page ?? 100;
 
   // get number of founded vacancies
   const found: number = await getFound(hh_url, headers_init);
+  console.log(red(`LIMIT: ${ limit }`))
 
   const avoid_words_lowercase: string[] = avoid_words?.map(sw => sw.toLowerCase()) ?? [] ;
   console.log(yellow(`avoid words: ${ avoid_words_lowercase.join(', ') }`));
