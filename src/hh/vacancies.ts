@@ -43,6 +43,7 @@ const filterVacancies = (data: any[], avoid_words: string[]): any[] => {
 }
 
 const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: number, avoid_words?: string[]): Promise<any[]> => {
+  const start = new Date().getTime();
   // limit
   if (limit === undefined) {
     limit = 2000;
@@ -64,7 +65,7 @@ const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: 
     console.log(yellow(`avoid words: ${ avoid_words_lowercase.join(', ') }`));
   }
 
-  let vacancies: any[] = [];
+  const responses: Promise<Response>[] = [];
   for (let page = 0; page < Math.ceil((found <= limit ? found : limit ) / per_page); page++) {
     hh_url.query.page = page;
 
@@ -72,16 +73,25 @@ const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: 
 
     console.log(yellow(`page №${ page }; request to ${ url }`));
 
-    const response = await fetch(url, { headers: headers_init });
+    const response = fetch(url, { headers: headers_init });
 
-    const data: any[] = (await response.json())['items'];
+    responses.push(response);
+  }
+  const results: Response[] = await Promise.all(responses);
 
-    vacancies = [...vacancies, ...( avoid_words_lowercase?.length ? filterVacancies(data, avoid_words_lowercase) : data )]; // vacancies.concat(data['items'])
+  const vacancies: any[] = [];
+  for (const res of results) {
+    const data: any[] = (await res.json())['items'];
+    vacancies.push(...( avoid_words_lowercase.length ? filterVacancies(data, avoid_words_lowercase) : data ) );
   }
 
-  // HOW MANY PARSED HOW LONG AND SO ON
-  console.log(green('OK'));
-  console.log(green(`passed the conditions: ${ vacancies.length }`))
+  const end = new Date().getTime();
+
+  console.log(green(`fetched ${ responses.length * (hh_url.query.per_page ?? 100) } in ${ (end - start) / 1000 } sec`));
+
+  if (avoid_words_lowercase.length) {
+    console.log(green(`passed the conditions: ${ vacancies.length }`))
+  }
 
   return vacancies;
 }
