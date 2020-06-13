@@ -60,7 +60,9 @@ const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: 
   console.log(red(`LIMIT: ${ limit }`))
 
   const avoid_words_lowercase: string[] = avoid_words?.map(sw => sw.toLowerCase()) ?? [] ;
-  console.log(yellow(`avoid words: ${ avoid_words_lowercase.join(', ') }`));
+  if (avoid_words_lowercase.length) {
+    console.log(yellow(`avoid words: ${ avoid_words_lowercase.join(', ') }`));
+  }
 
   let vacancies: any[] = [];
   for (let page = 0; page < Math.ceil((found <= limit ? found : limit ) / per_page); page++) {
