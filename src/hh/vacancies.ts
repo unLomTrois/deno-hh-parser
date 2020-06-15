@@ -28,8 +28,8 @@ const getFound = async (hh_url: HH.URL, headers_init?: HeadersInit): Promise<num
   return found;
 }
 
-const filterVacancies = (data: any[], avoid_words: string[]): any[] => {
-  return data.filter((el: HH.Response) => {
+const filterVacancies = (vacancies: any[], avoid_words: string[]): any[] => {
+  return vacancies.filter((el: HH.Response) => {
     const name = el.name.toLowerCase();
     const requirement = (el.snippet.requirement ?? '').toLowerCase();
     const responsibility = (el.snippet.responsibility ?? '').toLowerCase();
@@ -42,51 +42,67 @@ const filterVacancies = (data: any[], avoid_words: string[]): any[] => {
   });
 }
 
-const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit: number = 2000, avoid_words?: string[]): Promise<any[]> => {
+const urlByPage = (url:string, page: number): string => url.replace('page=0', `page=${ page }`);
+
+const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit: number = 2000, avoid_words: string[] = []): Promise<any[]> => {
   const start = new Date().getTime();
 
   if (limit < (hh_url.query.per_page ?? 100) ) {
     hh_url.query.per_page = limit;
   }
 
-  // items per page
-  const per_page = hh_url.query.per_page ?? 100;
-
-  // get number of founded vacancies
+  // получаем итоговое число найденных по запросу вакансий
   const found: number = await getFound(hh_url, headers_init);
   console.log(red(`LIMIT: ${ limit }`))
 
-  const avoid_words_lowercase: string[] = avoid_words?.map(sw => sw.toLowerCase()) ?? [] ;
-  if (avoid_words_lowercase.length) {
-    console.log(yellow(`avoid words: ${ avoid_words_lowercase.join(', ') }`));
-  }
+  // получаем список avoid-слов в нижнем регистре
+  const avoid_words_lowercase: string[] = avoid_words.map(sw => sw.toLowerCase());
 
-  const responses: Promise<Response>[] = [];
-  for (let page = 0; page < Math.ceil((found <= limit ? found : limit ) / per_page); page++) {
-    hh_url.query.page = page;
+  // получаем количество элементов на страницу
+  const per_page: number = hh_url.query.per_page ?? 100;
 
-    const url = getURL(hh_url);
+  // вычисляем количество требуемых страниц
+  const pages: number = Math.ceil((found <= limit ? found : limit ) / per_page);
 
-    console.log(yellow(`page №${ page }; request to ${ url }`));
+  // получаем базовый url
+  const base_url: string = getURL(hh_url);
 
-    const response = fetch(url, { headers: headers_init });
+  // генерируем массив url-ек
+  const urls: string[] = Array.from(Array(pages).fill(base_url), (url: string, page: number) => urlByPage(url, page));
 
-    responses.push(response);
-  }
-  const results: Response[] = await Promise.all(responses);
+  // делаем промисы на фетчи
+  const connections: Promise<Response>[] = urls.map(url => fetch(url, { headers: headers_init }));
 
-  const vacancies: any[] = [];
-  for (const res of results) {
-    const data: any[] = (await res.json())['items'];
-    vacancies.push(...( avoid_words_lowercase.length ? filterVacancies(data, avoid_words_lowercase) : data ) );
-  }
+  // ждём резолва фетчей
+  const responses: Response[] = await Promise.all(connections);
+
+  // делаем промисы на жсоны
+  const data: Promise<any>[] = responses.map(res => res.json());
+
+  // ждём резолва жсонов
+  const json_data: any[] = await Promise.all(data);
+
+  // вакансии в поле items
+  const raw_vacancies: any[] = json_data.map(page => page['items']);
+
+  // объединяем массивы вакансий в единый массив
+  const vacancies: any[] = new Array().concat( ...raw_vacancies );
 
   const end = new Date().getTime();
 
-  console.log(green(`fetched ${ found } in ${ (end - start) / 1000 } sec`));
+  console.log(green(`fetched ${ vacancies.length } in ${ (end - start) / 1000 } sec`));
 
+  // фильтрация по avoid-словам
   if (avoid_words_lowercase.length) {
-    console.log(green(`passed the conditions: ${ vacancies.length }`))
+    console.log(yellow(`avoid words: ${ avoid_words_lowercase.join(', ') }`));
+
+    const start = new Date().getTime();
+    const filtered_vacancies = filterVacancies(vacancies, avoid_words_lowercase);
+    const end = new Date().getTime();
+
+    console.log(green(`${ vacancies.length } vacancies filtered to ${ filtered_vacancies.length } in ${ (end - start) / 1000 }`))
+
+    return filtered_vacancies;
   }
 
   return vacancies;
