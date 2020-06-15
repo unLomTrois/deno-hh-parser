@@ -42,15 +42,11 @@ const filterVacancies = (data: any[], avoid_words: string[]): any[] => {
   });
 }
 
-const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: number, avoid_words?: string[]): Promise<any[]> => {
+const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit: number = 2000, avoid_words?: string[]): Promise<any[]> => {
   const start = new Date().getTime();
-  // limit
-  if (limit === undefined) {
-    limit = 2000;
-  } else {
-    if (limit < (hh_url.query.per_page ?? 100) ) {
-      hh_url.query.per_page = limit;
-    }
+
+  if (limit < (hh_url.query.per_page ?? 100) ) {
+    hh_url.query.per_page = limit;
   }
 
   // items per page
@@ -87,7 +83,7 @@ const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: 
 
   const end = new Date().getTime();
 
-  console.log(green(`fetched ${ responses.length * (hh_url.query.per_page ?? 100) } in ${ (end - start) / 1000 } sec`));
+  console.log(green(`fetched ${ found } in ${ (end - start) / 1000 } sec`));
 
   if (avoid_words_lowercase.length) {
     console.log(green(`passed the conditions: ${ vacancies.length }`))
@@ -113,9 +109,7 @@ const getFullVacancies = async (urls: string[]): Promise<any[]> => {
 }
 
 const getFullVacancy = async (vacancy_url: string, headers_init?: HeadersInit): Promise<any> => {
-  const response = await fetch(vacancy_url, {
-    headers: headers_init
-  });
+  const response = await fetch(vacancy_url, { headers: headers_init });
 
   return response;
 }
