@@ -50,9 +50,11 @@ const get_full: boolean = cli_args.f ?? false; // -f
 
 /// Headers
 
+const VERSION: string = '0.3.0';
+
 const hh_headers: HeadersInit = {
-  'User-Agent': 'deno_hh_parser/0.2.0'
-}
+  'User-Agent': `deno-hh-parser/${VERSION}`
+};
 
 
 /// FETCH PART
