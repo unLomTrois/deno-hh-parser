@@ -1,4 +1,4 @@
-import { getVacancies } from './hh/vacancies.ts'
+import { getVacancies, getFullVacancies } from './hh/vacancies.ts'
 import { green, yellow, red } from 'https://deno.land/std/fmt/colors.ts';
 import { ensureDir } from "https://deno.land/std/fs/mod.ts";
 import { parse } from "https://deno.land/std/flags/mod.ts";
@@ -44,6 +44,10 @@ const not_fetch: boolean = cli_args.n ?? false; // -n
 //* analyze flag *//
 const analyze: boolean = cli_args.a ?? false; // -a
 
+//* get full flag *//
+const get_full: boolean = cli_args.f ?? false; // -f
+
+
 /// Headers
 
 const hh_headers: HeadersInit = {
@@ -75,17 +79,17 @@ if (!not_fetch) {
   /// SAVE PART
   await ensureDir("./log");
 
-  await Deno.writeFile("./log/vacancies.json", new TextEncoder().encode(JSON.stringify(data, undefined, 2)));
+  await Deno.writeFile('./log/vacancies.json', new TextEncoder().encode(JSON.stringify(data, undefined, 2)));
   console.log(green('vacancies.json have been saved'));
 } else {
   console.log(yellow('NOT FETCH NEW DATA'))
 }
 
 
-/// ANALYZE PART
+/// GET FULL PART
 
-if (analyze) {
-  console.log(yellow('ANALYZE'))
+if (get_full) {
+  console.log(yellow('FETCH FULL'))
 
   console.log(yellow('Preparation to alalyze'));
   await ensureDir("./log");
@@ -100,8 +104,32 @@ if (analyze) {
   });
 
   const start = new Date().getTime();
+  console.log(yellow('Get full...'));
+  const full_data = await getFullVacancies(urls);
+  const end = new Date().getTime();
+  console.log(green(`Got ${ full_data.length } full vacancies in ${ (end - start) / 1000 } sec`));
+
+  console.log(yellow('Saving...'));
+  await Deno.writeFile("./log/full_vacancies.json", new TextEncoder().encode(JSON.stringify(full_data, undefined, 2)));
+  console.log(green('full_vacancies.json have been saved'));
+}
+
+
+/// ANALYZE PART
+
+if (analyze) {
+  console.log(yellow('ANALYZE'))
+
+  console.log(yellow('Preparation to alalyze'));
+  await ensureDir("./log");
+
+  const decoder = new TextDecoder("utf-8");
+  const full_vacancies: any[] = JSON.parse(decoder.decode(await Deno.readFile("./log/full_vacancies.json")));
+  console.log(green('Read full_vacancies.json file'));
+
+  const start = new Date().getTime();
   console.log(yellow('Analyzing...'));
-  const analyzed_data = await analyzeVacancies(urls);
+  const analyzed_data = await analyzeVacancies(full_vacancies);
   const end = new Date().getTime();
   console.log(green(`Data have been analyzed in ${ (end - start) / 1000 } sec`));
 

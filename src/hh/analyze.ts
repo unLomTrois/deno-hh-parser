@@ -1,11 +1,10 @@
-import { getFullVacancy } from "./vacancies.ts"
+import { green } from 'https://deno.land/std/fmt/colors.ts';
 
+const analyzeVacancies = async (vacancies: any[]): Promise<any> => {
 
-const analyzeVacancies = async (urls: string[]): Promise<any> => {
-  const vacancies: any[] = [];
-
-  for (const url of urls) {
-    const { id, name, key_skills }: {id: string, name: string, key_skills: any[] } =  await getFullVacancy(url);
+  const filtered_vacancies: any[] = [];
+  for (const vacancy of vacancies) {
+    const { id, name, key_skills, alternate_url }: {id: string, name: string, key_skills: any[], alternate_url: string } = vacancy;
 
     if (key_skills.length) {
       const filtered_key_skills: string[] = [];
@@ -13,11 +12,13 @@ const analyzeVacancies = async (urls: string[]): Promise<any> => {
         filtered_key_skills.push(skill.name);
       });
 
-      vacancies.push({id, name, key_skills: filtered_key_skills, url});
+      filtered_vacancies.push({id, name, key_skills: filtered_key_skills, alternate_url});
     }
   }
 
-  return vacancies;
+  console.log(green(`parsed ${ filtered_vacancies.length } vacancies with key words`));
+
+  return filtered_vacancies;
 }
 
 export {

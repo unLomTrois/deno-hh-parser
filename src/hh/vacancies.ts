@@ -96,16 +96,32 @@ const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit?: 
   return vacancies;
 }
 
+const getFullVacancies = async (urls: string[]): Promise<any[]> => {
+  // делаю промисы на фетчи
+  const connections: Promise<Response>[] = urls.map(url => fetch(url));
+
+  // жду резолва промисов
+  const responses: Response[] = await Promise.all(connections);
+
+  // делаю промисы на жсоны
+  const data: Promise<any>[] = responses.map(res => res.json());
+
+  // жду резолва жсонов
+  const vacancies: any[] = await Promise.all(data);
+
+  return vacancies;
+}
+
 const getFullVacancy = async (vacancy_url: string, headers_init?: HeadersInit): Promise<any> => {
   const response = await fetch(vacancy_url, {
     headers: headers_init
   });
-  const vacancy: any = (await response.json());
 
-  return vacancy;
+  return response;
 }
 
 export {
   getVacancies,
+  getFullVacancies,
   getFullVacancy
 }
