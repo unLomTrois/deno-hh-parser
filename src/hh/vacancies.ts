@@ -13,16 +13,20 @@ const queryToString = (query: HH.QueryInterface): string => {
 
 const getURL = (url: HH.URL): string => url.baseURL + url.method + queryToString(url.query)
 
-const getFound = async (hh_url: HH.URL, headers_init?: HeadersInit): Promise<number> => {
-  const clonned_hh_url = { ...hh_url };
-  clonned_hh_url.query = { ...hh_url.query, per_page: 0 };
+const getFound = async (url: string, headers_init?: HeadersInit): Promise<number> => {
 
-  const url = getURL(clonned_hh_url);
+  // делаем промис на фетч
   console.log(yellow(`request to ${ url } `));
+  const connection: Promise<Response> = fetch(url, { headers: headers_init });
 
-  const response: any = await (await fetch(url, { headers: headers_init })).json();
+  // резолвим фетч
+  const response: Response = await connection;
 
-  const found: number = response['found'];
+  // ждём жсона
+  const data: any = await response.json();
+
+  // получаем нужное поле
+  const found: number = data['found'];
   console.log(green(`found: ${ found } vacancies`));
 
   return found;
@@ -42,7 +46,7 @@ const filterVacancies = (vacancies: any[], avoid_words: string[]): any[] => {
   });
 }
 
-const urlByPage = (url:string, page: number): string => url.replace('page=0', `page=${ page }`);
+const urlReplace = (url:string, search: string | RegExp, replace: string): string => url.replace(search, replace);
 
 const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit: number = 2000, avoid_words: string[] = []): Promise<any[]> => {
   const start = new Date().getTime();
@@ -51,8 +55,14 @@ const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit: n
     hh_url.query.per_page = limit;
   }
 
+  // получаем базовый url
+  const base_url: string = getURL(hh_url);
+
   // получаем итоговое число найденных по запросу вакансий
-  const found: number = await getFound(hh_url, headers_init);
+  const found: number = await getFound(
+    urlReplace(base_url, `per_page=${ hh_url.query.per_page }`, 'per_page=0'),
+    headers_init
+  );
   console.log(red(`LIMIT: ${ limit }`))
 
   // получаем список avoid-слов в нижнем регистре
@@ -64,11 +74,11 @@ const getVacancies = async (hh_url: HH.URL, headers_init?: HeadersInit, limit: n
   // вычисляем количество требуемых страниц
   const pages: number = Math.ceil((found <= limit ? found : limit ) / per_page);
 
-  // получаем базовый url
-  const base_url: string = getURL(hh_url);
-
   // генерируем массив url-ек
-  const urls: string[] = Array.from(Array(pages).fill(base_url), (url: string, page: number) => urlByPage(url, page));
+  const urls: string[] = Array.from(
+    Array(pages).fill(base_url),
+    (url: string, page: number) => urlReplace(url, `page=${ hh_url.query.page }`, `page=${ page }`)
+  );
 
   // делаем промисы на фетчи
   const connections: Promise<Response>[] = urls.map(url => fetch(url, { headers: headers_init }));
