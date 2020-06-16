@@ -4,7 +4,7 @@ It's a deno-powered cli-tool to fetch and analyze vacancies (and resumes soon...
 ## install
 ```git clone https://github.com/unLomTrois/deno-hh-parser.git```
 
-```install```
+```run install.bat``` or ```sh install.sh```
 
 ```deno-hh-parser --query=*job_name*```
 
