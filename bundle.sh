@@ -1,1 +1,1 @@
-deno bundle --unstable src/index.ts ./deno-hh-parser.bundle.js
+deno bundle --unstable -c ./tsconfig.json src/index.ts ./deno-hh-parser.bundle.js

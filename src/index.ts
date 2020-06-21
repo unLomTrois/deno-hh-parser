@@ -1,5 +1,5 @@
 import { getVacancies, getFullVacancies } from './hh/vacancies.ts'
-import { green, yellow, red } from 'https://deno.land/std/fmt/colors.ts';
+import { green, yellow } from 'https://deno.land/std/fmt/colors.ts';
 import { ensureDir } from "https://deno.land/std/fs/mod.ts";
 import { parse } from "https://deno.land/std/flags/mod.ts";
 import { analyzeVacancies } from './hh/analyze.ts';
