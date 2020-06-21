@@ -1,2 +1,5 @@
 # logs 
 log
+
+# bundle file
+deno-hh-parser.bundle.js
