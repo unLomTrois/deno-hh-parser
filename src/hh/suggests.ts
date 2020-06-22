@@ -1,6 +1,10 @@
 
 // get area_id from https://api.hh.ru/areas
-const suggestArea = async (text: string, locale: string): Promise<number> => {
+const suggestArea = async (text: string | number, locale: string): Promise<number> => {
+  if (typeof text == "number") {
+    return text;
+  }
+
   const url = `https://api.hh.ru/suggests/areas?text=${ text }&locale=${ locale }`;
 
   const connection: Promise<Response> = fetch(url);

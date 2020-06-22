@@ -27,7 +27,7 @@ const limit: number = cli_args.limit ?? 100; // --limit=number
 const locale: string = cli_args.locale ?? 'RU';
 
 //* area of vacancy *//
-const area: string = cli_args.area ?? 113; // --area="Moscow"
+const area: string | number = cli_args.area ?? 113; // --area="Moscow"; --area=1
 const area_id: number = await suggestArea(area, locale);
 
 //* sorting order *//
